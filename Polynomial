@@ -1,0 +1,1519 @@
+#include <iostream>
+#include <math.h>
+#include <fstream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+class Bad_exception{
+public:
+    Bad_exception(string e){
+        error = e;
+    }
+    void print(){
+        cout<<error<<endl;
+    }
+
+private:
+    string error;
+};
+
+class Term
+{
+public:
+
+    Term(float _c, int _p) : c(_c), p(_p){};
+    Term(){};
+    float get_c() { return c; }
+    int get_p() { return p; }
+
+    Term operator+(float);
+    friend Term operator+(float, Term);
+    Term operator+(Term);
+
+    Term operator-(float);
+    friend Term operator-(float, Term);
+    Term operator-(Term);
+
+    Term operator*(float);
+    friend Term operator*(float, Term);
+    Term operator*(Term);
+
+    Term operator/(float);
+    friend Term operator/(float, Term);
+    Term operator/(Term);
+
+    Term &operator+=(Term);
+    Term &operator-=(Term);
+    Term &operator*=(Term);
+    Term &operator/=(Term);
+
+    Term operator=(Term);
+    bool operator<(Term);
+    bool operator<(float);
+    bool operator>(Term);
+    bool operator>(float);
+    bool operator<=(Term);
+    bool operator<=(float);
+    bool operator>=(Term);
+    bool operator>=(float);
+    bool operator==(Term);
+    bool operator==(float);
+    bool operator!=(Term);
+    bool operator!=(float);
+
+    Term operator~();
+
+    Term operator++();
+    Term operator++(int);
+    Term operator--();
+    Term operator--(int);
+
+    float operator()(float);
+
+    friend ostream &operator<<(ostream &, Term &);
+    friend istream &operator>>(istream &, Term &);
+    void print()
+    {
+        cout << c << endl
+             << p << endl;
+    }
+
+private:
+    float c;
+    int p;
+};
+// operator +
+Term Term::operator+(float f)
+{
+    if (c == 0)
+    {
+        return Term(f, 0);
+    }
+    else if (p == 0)
+    {
+        return Term(f + c, 0);
+    }
+    throw Bad_exception("The + operation not done");
+}
+Term operator+(float f, Term t)
+{
+    if (t.c == 0)
+    {
+        return Term(f, 0);
+    }
+    else if (t.p == 0)
+    {
+        return Term(f + t.c, 0);
+    }
+    throw Bad_exception("The + operation not done");
+}
+Term Term::operator+(Term t2)
+{
+    if (p == t2.p)
+    {
+        return Term(c + t2.c, p);
+    }
+    else if (c == 0)
+    {
+        return Term(t2.c, t2.p);
+    }
+    else if (t2.c == 0)
+    {
+        return Term(c, p);
+    }
+    throw Bad_exception("The + operation not done");
+}
+////////////////////////////
+// operator -
+Term Term::operator-(float f)
+{
+    if (c == 0)
+    {
+        return Term(-f, 0);
+    }
+    else if (p == 0)
+    {
+        return Term(c - f, 0);
+    }
+    throw Bad_exception("The - operation not done");
+}
+Term operator-(float f, Term t)
+{
+    if (t.c == 0)
+    {
+        return Term(f, 0);
+    }
+    else if (t.p == 0)
+    {
+        return Term(f - t.c, 0);
+    }
+    throw Bad_exception("The - operation not done");
+}
+Term Term::operator-(Term t2)
+{
+    if (p == t2.p)
+    {
+        return Term(c - t2.c, p);
+    }
+    else if (c == 0)
+    {
+        return Term(-t2.c, t2.p);
+    }
+    else if (t2.c == 0)
+    {
+        return Term(c, p);
+    }
+    throw Bad_exception("The - operation not done");
+}
+////////////////////////////
+// operator *
+Term Term::operator*(float f)
+{
+    return Term(c * f, p);
+}
+Term operator*(float f, Term t)
+{
+    return Term(f * t.c, t.p);
+}
+Term Term::operator*(Term t2)
+{
+    return Term(c * t2.c, p + t2.p);
+}
+////////////////////////////
+// operator /
+Term Term::operator/(float f)
+{
+    if(f !=0){
+        return Term(c / f, p);
+    }
+    throw Bad_exception("The / operation not done");
+}
+Term operator/(float f, Term t)
+{
+    return Term(f / t.c, -t.p);
+}
+Term Term::operator/(Term t2)
+{
+    return Term(c / t2.c, p - t2.p);
+}
+// operator +=
+Term &Term::operator+=(Term t)
+{
+    if (p == t.p)
+    {
+        c += t.c;
+        return *this;
+    }
+    throw Bad_exception("The += operation not done");
+}
+////////////////////////////
+// operator -=
+Term &Term::operator-=(Term t)
+{
+    if (p == t.p)
+    {
+        c -= t.c;
+        return *this;
+    }
+    throw Bad_exception("The -= operation not done");
+}
+////////////////////////////
+// operator *=
+Term &Term::operator*=(Term t)
+{
+    c *= t.c;
+    p += t.p;
+    return *this;
+}
+////////////////////////////
+// operator /=
+Term &Term::operator/=(Term t)
+{
+    if(t.c!=0){
+        c /= t.c;
+        p -= t.p;
+        return *this;
+    }
+    throw Bad_exception("The /= operation not done");
+
+}
+////////////////////////////
+// operator  <=>
+Term Term::operator=(Term t)
+{
+    p = t.p;
+    c = t.c;
+
+    return Term(c, p);
+}
+bool Term::operator<(Term t)
+{
+    if (t.p > p)
+    {
+        return true;
+    }
+    else if (t.p == p && t.c > c)
+    {
+        return true;
+    }
+    return false;
+}
+bool Term::operator<(float f)
+{
+    if (p == 0 && c < f)
+    {
+        return true;
+    }
+    else if (p < 0)
+    {
+        return true;
+    }
+    return false;
+}
+bool Term::operator>(Term t)
+{
+    if (t.p < p)
+    {
+        return true;
+    }
+    else if (t.p == p && t.c < c)
+    {
+        return true;
+    }
+    return false;
+}
+bool Term::operator>(float f)
+{
+    if (p == 0 && c > f)
+    {
+        return true;
+    }
+    else if (p > 0)
+    {
+        return true;
+    }
+    return false;
+}
+bool Term::operator<=(Term t)
+{
+    if (t.p >= p)
+    {
+        return true;
+    }
+    else if (t.p == p && t.c >= c)
+    {
+        return true;
+    }
+    return false;
+}
+bool Term::operator<=(float f)
+{
+    if (p == 0 && c <= f)
+    {
+        return true;
+    }
+    else if (p < 0)
+    {
+        return true;
+    }
+    return false;
+}
+bool Term::operator>=(Term t)
+{
+    if (t.p <= p)
+    {
+        return true;
+    }
+    else if (t.p == p && t.c <= c)
+    {
+        return true;
+    }
+    return false;
+}
+bool Term::operator>=(float f)
+{
+    if (p == 0 && c >= f)
+    {
+        return true;
+    }
+    else if (p > 0)
+    {
+        return true;
+    }
+    return false;
+}
+////////////////////////////
+// operator  == !=
+bool Term::operator==(Term t)
+{
+    if (p == t.p && c == t.c)
+    {
+        return true;
+    }
+    return false;
+}
+bool Term::operator==(float f)
+{
+    if (p == 0 && c == f)
+    {
+        return true;
+    }
+    return false;
+}
+bool Term::operator!=(Term t)
+{
+    if (t.c != c || t.p != p)
+    {
+        return true;
+    }
+    return false;
+}
+bool Term::operator!=(float f)
+{
+    if (p != 0)
+    {
+        return true;
+    }
+    if(p == 0 && c != f){
+        return true;
+    }
+    return false;
+}
+// operator ~
+Term Term::operator~()
+{
+    if (p == 0)
+    {
+        return Term(0, 0);
+    }
+    else
+    {
+        return Term(c * p, p - 1);
+    }
+}
+// operator ++ --
+Term Term::operator++()
+{
+    if (p == 0)
+    {
+        return Term(++c, 0);
+    }
+    throw Bad_exception("The ++ operation not done");
+}
+Term Term::operator++(int)
+{
+    if (p == 0)
+    {
+        return Term(c++, 0);
+    }
+    throw Bad_exception("The ++ operation not done");
+}
+Term Term::operator--()
+{
+    if (p == 0)
+    {
+        return Term(--c, 0);
+    }
+    throw Bad_exception("The -- operation not done");
+}
+Term Term::operator--(int)
+{
+    if (p == 0)
+    {
+        return Term(c--, p--);
+    }
+    throw Bad_exception("The -- operation not done");
+}
+float Term::operator()(float f)
+{
+    return c * pow(f, p);
+}
+ostream &operator<<(ostream &out, Term &t)
+{
+    if (t.p == 1 && t.c == 1)
+    {
+        out << "x" ;
+    }
+    else if (t.p == 1)
+    {
+        if (t.c == 1)
+        {
+            out << "x" ;
+        }else if(t.c==-1){
+            out<<"-x";
+        }
+        else
+        {
+            out << t.c << "x";
+        }
+    }
+    else if(t.c==-1){
+        out<<"-x^"<<t.p;
+    }
+    else if (t.p == 0)
+    {
+        out << t.c ;
+    }
+    else if (t.c == 1)
+    {
+        out << "x^" << t.p ;
+    }
+    else
+    {
+        out << t.c << "x^" << t.p;
+    }
+    return out;
+}
+istream &operator>>(istream &in, Term &t)
+{
+    string s;
+    in >> s;
+    int p;
+    int x;
+    float c;
+    bool check = false;
+    for(int i=0;i<s.size();i++){
+        if(s[0]=='-' && s[1]=='x'){
+            if(s[2]=='^'){
+                t.p=stod(s.substr(3));
+            }else{
+               t.p=1;
+            }
+            t.c=-1;
+            check=true;
+
+            break;
+        }
+    }
+    for (int i = 0; i < s.size() && check==false; i++)
+    {
+
+        if (s[0] == 'x')
+        {
+            if (s.size() == 1)
+            {
+                t.c = 1;
+                t.p = 1;
+            }
+            else if (s[1] == '^')
+            {
+                t.c = 1;
+                p = stod(s.substr(2).c_str());
+                t.p = p;
+            }
+            check = true;
+            break;
+        }
+        if (s[s.size() - 1] == 'x')
+        {
+            if (s.size() == 1)
+            {
+                t.c = 1;
+                t.p = 1;
+                check = true;
+                break;
+            }
+            else
+            {
+                x = s.find('x');
+                c = stod(s.substr(0, x).c_str());
+                t.c = c;
+                t.p = 1;
+                check = true;
+                break;
+            }
+        }
+        if (s[i] == 'x' && s[i + 1] == '^')
+        {
+            x = s.find('x');
+            c = stod(s.substr(0, x).c_str());
+            t.c = c;
+            p = stod(s.substr(x + 2).c_str());
+            t.p = p;
+            check = true;
+            break;
+        }
+    }
+
+    for (int i = 0; i < s.size() && check ==false; i++)
+    {
+        if (s[i] != 'x' && s[i + 1] != '^')
+        {
+            t.c = stod(s.substr().c_str());
+            t.p = 0;
+            check = true;
+        }
+    }
+    if (check)
+    {
+        return in;
+    }
+    throw Bad_exception("The >> operation not done");
+}
+class Polynomial
+{
+public:
+    Polynomial(vector<Term> p1) : p(p1) {}
+
+    friend vector<Term> delete_duplicate_term(vector<Term>&);
+    Polynomial operator+(float);
+    friend Polynomial operator+(float, Polynomial);
+    Polynomial operator+(Polynomial);
+    Polynomial operator+(Term);
+    friend Polynomial operator+(Term, Polynomial);
+
+    Polynomial operator-(float);
+    friend Polynomial operator-(float, Polynomial);
+    Polynomial operator-(Polynomial);
+    Polynomial operator-(Term);
+    friend Polynomial operator-(Term, Polynomial);
+
+    Polynomial operator*(float);
+    friend Polynomial operator*(float, Polynomial);
+    Polynomial operator*(Polynomial);
+    Polynomial operator*(Term);
+    friend Polynomial operator*(Term, Polynomial);
+
+    Polynomial operator+=(Polynomial);
+    Polynomial operator-=(Polynomial);
+    Polynomial operator*=(Polynomial);
+
+    Polynomial operator=(Polynomial);
+
+    bool operator>(Polynomial);
+    bool operator>(Term);
+    bool operator>(float);
+    bool operator<(Polynomial);
+    bool operator<(Term);
+    bool operator<(float);
+    bool operator<=(Polynomial);
+    bool operator<=(Term);
+    bool operator<=(float);
+    bool operator>=(Polynomial);
+    bool operator>=(Term);
+    bool operator>=(float);
+    bool operator==(Polynomial);
+    bool operator==(Term);
+    bool operator==(float);
+    bool operator!=(Polynomial);
+    bool operator!=(Term);
+    bool operator!=(float);
+
+    Polynomial operator~();
+
+    Polynomial & operator++();
+    Polynomial operator++(int);
+    Polynomial & operator--();
+    Polynomial operator--(int);
+
+    float operator()(float);
+    const Term operator[] (const int& index) const;
+    Term& operator[](const int& index);
+
+    friend istream& operator>>(istream&,Polynomial&);
+    friend ostream& operator<<(ostream&,Polynomial&);
+
+    friend void write_file_bin(Polynomial&);
+    friend void read_file_bin(Polynomial&);
+    friend void read_file_txt(Polynomial&);
+    int num_of_Term();
+    int most_pow();
+    void print()
+    {
+        for (int i = 0; i < p.size(); i++)
+        {
+            p[i].print();
+            cout << endl;
+        }
+    }
+
+private:
+    vector<Term> p;
+};
+
+void sort( vector<Term>& p)
+{
+    for (int i = 0; i < p.size(); i++)
+    {
+        for (int j = 0; j < p.size() - 1; j++)
+        {
+            if (p[j].get_p() < p[j + 1].get_p())
+            {
+                swap(p[j], p[j + 1]);
+            }
+        }
+    }
+}
+vector<Term>  delete_duplicate_term(vector<Term>&_p){
+    vector<Term>np;
+    for(int i=0;i<_p.size();i++){
+        for(int j=i+1;j<_p.size();j++){
+            if(_p[i].get_p()==_p[j].get_p() && _p[i]!=Term(0,0)){
+                np.push_back(_p[i]+_p[j]);
+                _p[i]=_p[j]=Term(0,0);
+            }
+        }
+    }
+    for(int i=0;i<_p.size();i++){
+        if(_p[i]!=Term(0,0)){
+            np.push_back(_p[i]);
+        }
+    }
+    return np;
+}
+Polynomial Polynomial::operator+(float f)
+{
+    vector<Term> t=p;
+    bool check =true;
+    for (int i = 0; i < t.size(); i++)
+    {
+        if (t[i].get_p() == 0)
+        {
+             t[i]=p[i]+f;
+             check=false;
+        }
+    }
+    if(check){
+        t.push_back(Term (f,0));
+
+    }
+    sort(t);
+    return Polynomial(t);
+}
+Polynomial operator+(float f, Polynomial po)
+{
+    vector<Term> t = po.p;
+    bool check =true;
+    for (int i = 0; i < t.size(); i++)
+    {
+        if (t[i].get_p() == 0)
+        {
+            t[i]=po.p[i]+f;
+            check=false;
+        }
+    }
+    if(check){
+        t.push_back(Term (f,0));
+    }
+    sort(t);
+    return Polynomial(t);
+}
+Polynomial Polynomial::operator+(Polynomial po2)
+{
+    vector<Term> t;
+    for (int i = 0; i < p.size(); i++)
+    {
+        bool check = true;
+        for (int j = 0; j < po2.p.size() && check == true; j++)
+        {
+            if (p[i].get_p() == po2.p[j].get_p())
+            {
+                t.push_back(p[i]+po2.p[j]);
+                check = false;
+            }
+        }
+        if (check == true)
+        {
+            t.push_back(p[i]);
+        }
+    }
+    for (int i = 0; i < po2.p.size(); i++)
+    {
+        bool check = true;
+        for (int j = 0; j < p.size() && check == true; j++)
+        {
+            if (p[j].get_p() == po2.p[i].get_p())
+            {
+                check = false;
+            }
+        }
+        if (check == true)
+        {
+            t.push_back(po2.p[i]);
+        }
+    }
+    sort(t);
+    return Polynomial(t);
+}
+Polynomial Polynomial::operator+(Term t)
+{
+    vector<Term> _p = p;
+    bool check =true;
+    for (int i = 0; i < _p.size(); i++)
+    {
+        if (_p[i].get_p() == t.get_p())
+        {
+            _p[i]+=t;
+            check =false;
+        }
+    }
+    if(check){
+        _p.push_back(t);
+    }
+    sort(_p);
+    return Polynomial(_p);
+}
+Polynomial operator+(Term t, Polynomial po)
+{
+    vector<Term> _p = po.p;
+    bool check =true;
+    for (int i = 0; i < _p.size(); i++)
+    {
+        if (_p[i].get_p() == t.get_p())
+        {
+            _p[i]+=t;
+            check =false;
+        }
+    }
+    if(check){
+        _p.push_back(t);
+    }
+    sort(_p);
+    return Polynomial(_p);
+}
+
+Polynomial Polynomial::operator-(float f)
+{
+    vector<Term> t=p;
+    bool check =true;
+    for (int i = 0; i < t.size(); i++)
+    {
+        if (t[i].get_p() == 0)
+        {
+             t[i]=p[i]-f;
+             check=false;
+        }
+    }
+    if(check){
+        t.push_back(Term (-f,0));
+
+    }
+    sort(t);
+    return Polynomial(t);
+}
+Polynomial operator-(float f, Polynomial po)
+{
+    vector<Term> t = po.p;
+    bool check =true;
+    for (int i = 0; i < t.size(); i++)
+    {
+        t[i]*=Term(-1,0);
+        if (t[i].get_p() == 0)
+        {
+            t[i]=f+po.p[i];
+            check=false;
+        }
+    }
+    if(check){
+        t.push_back(Term (f,0));
+    }
+    sort(t);
+    return Polynomial(t);
+}
+Polynomial Polynomial::operator-(Polynomial po2)
+{
+    vector<Term> t;
+    for (int i = 0; i < p.size(); i++)
+    {
+        bool check = true;
+        for (int j = 0; j < po2.p.size() && check == true; j++)
+        {
+            if (p[i].get_p() == po2.p[j].get_p())
+            {
+                t.push_back(p[i]-po2.p[j]);
+                check = false;
+            }
+        }
+        if (check == true)
+        {
+            t.push_back(p[i]);
+        }
+    }
+    for (int i = 0; i < po2.p.size(); i++)
+    {
+        bool check = true;
+        for (int j = 0; j < p.size() && check == true; j++)
+        {
+            if (p[j].get_p() == po2.p[i].get_p())
+            {
+                check = false;
+            }
+        }
+        if (check == true)
+        {
+            t.push_back(po2.p[i]*(-1));
+        }
+    }
+    sort(t);
+    return Polynomial(t);
+}
+Polynomial Polynomial::operator-(Term t)
+{
+    vector<Term> _p = p;
+    bool check =true;
+    for (int i = 0; i < _p.size(); i++)
+    {
+        if (_p[i].get_p() == t.get_p())
+        {
+            _p[i]-=t;
+            check =false;
+        }
+    }
+    if(check){
+        _p.push_back((-1)*t);
+    }
+    sort(_p);
+    return Polynomial(_p);
+}
+Polynomial operator-(Term t, Polynomial po)
+{
+    vector<Term> _p = po.p;
+    bool check =true;
+    for (int i = 0; i < _p.size(); i++)
+    {
+        po.p[i]*=Term(-1,0);
+        if (_p[i].get_p() == t.get_p())
+        {
+            _p[i]+=t;
+            check =false;
+        }
+    }
+    if(check){
+        _p.push_back(t);
+    }
+    sort(_p);
+    return Polynomial(_p);
+}
+
+Polynomial Polynomial::operator*(float f)
+{
+    vector<Term> _p;
+    for (int i = 0; i < p.size(); i++)
+    {
+        _p.push_back(p[i]*f);
+    }
+    return Polynomial(_p);
+}
+Polynomial operator*(float f, Polynomial po)
+{
+    vector<Term> _p;
+    for (int i = 0; i < po.p.size(); i++)
+    {
+        _p.push_back(f*po.p[i]);
+    }
+    return Polynomial(_p);
+}
+Polynomial Polynomial::operator*(Polynomial po2)
+{
+    vector<Term> _p;
+    for(int i=0; i<p.size();i++){
+         for(int j=0;j<po2.p.size();j++){
+             _p.push_back(p[i]*po2.p[j]);
+         }
+     }
+    _p=delete_duplicate_term(_p);
+    sort(_p);
+    return Polynomial(_p);
+}
+Polynomial Polynomial::operator*(Term t)
+{
+    vector<Term> _p;
+    for (int i = 0; i < p.size(); i++)
+    {
+        _p.push_back(p[i]*t);
+    }
+    return Polynomial(_p);
+}
+Polynomial operator*(Term t, Polynomial po)
+{
+    vector<Term> _p;
+    for (int i = 0; i < po.p.size(); i++)
+    {
+        _p.push_back(t*po.p[i]);
+    }
+    return Polynomial(_p);
+}
+Polynomial Polynomial::operator+=(Polynomial po2)
+{
+    vector<Term>t = po2.p;
+    for(int i=0;i<p.size();i++){
+        for(int j=0;j<t.size();j++){
+            if(p[i].get_p()==t[j].get_p()){
+                p[i]+=t[j];
+                t[j]=Term(0,0);
+            }
+        }
+    }
+    for(int i=0;i<t.size();i++){
+        if(t[i]!=Term(0,0)){
+            p.push_back(t[i]);
+        }
+    }
+    sort(p);
+    return Polynomial(p);
+}
+Polynomial Polynomial::operator-=(Polynomial po2){
+    vector<Term>t = po2.p;
+    for(int i=0;i<p.size();i++){
+        for(int j=0;j<t.size();j++){
+            if(p[i].get_p()==t[j].get_p()){
+                p[i]-=t[j];
+                t[j]=Term(0,0);
+            }
+        }
+    }
+    for(int i=0;i<t.size();i++){
+        if(t[i]!=Term(0,0)){
+            p.push_back(t[i]*-1);
+        }
+    }
+    sort(p);
+    return Polynomial(p);
+}
+Polynomial Polynomial::operator*=(Polynomial po2){
+    vector<Term> _p;
+    for(int i=0; i<p.size();i++){
+         for(int j=0;j<po2.p.size();j++){
+             _p.push_back(p[i]*po2.p[j]);
+         }
+     }
+    _p=delete_duplicate_term(_p);
+    sort(_p);
+    p=_p;
+    return Polynomial(p);
+}
+Polynomial Polynomial::operator=(Polynomial po2){
+    p=po2.p;
+    return Polynomial(p);
+}
+bool Polynomial::operator>(Polynomial po2){
+    if(p[0]>po2.p[0]){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator>(Term t){
+    if(p[0]>t){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator>(float f){
+    if(p[0]>f){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator<(Polynomial po2){
+    if(p[0]<po2.p[0]){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator<(Term t){
+    if(p[0]<t){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator<(float f){
+    if(p[0]<f){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator<=(Polynomial po2){
+    if(p[0]<=po2.p[0]){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator<=(Term t){
+    if(p[0]<=t){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator<=(float f){
+    if(p[0]<=f){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator>=(Polynomial po2){
+    if(p[0]>=po2.p[0]){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator>=(Term t){
+    if(p[0]>=t){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator>=(float f){
+    if(p[0]>=f){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator==(Polynomial po2){
+    bool check=true;
+    for(int i=0;i<p.size();i++){
+        if(p[i]!=po2.p[i]){
+            check=false;
+        }
+    }
+    if(check){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator==(Term t){
+    bool check=true;
+    for(int i=0;i<p.size();i++){
+        if(p[i]!=t){
+            check=false;
+        }
+    }
+    if(check){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator==(float f){
+    bool check=true;
+    for(int i=0;i<p.size();i++){
+        if(p[i]!=f){
+            check=false;
+        }
+    }
+    if(check){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator!=(Polynomial po2){
+    bool check = false;
+    for(int i=0;i<p.size();i++){
+        if(p[i]!=po2.p[i]){
+            check = true;
+        }
+    }
+    if(check){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator!=(Term t){
+    bool check = false;
+    for(int i=0;i<p.size();i++){
+        if(p[i]!=t){
+            check = true;
+        }
+    }
+    if(check){
+        return true;
+    }
+    return false;
+}
+bool Polynomial::operator!=(float f){
+    bool check = false;
+    for(int i=0;i<p.size();i++){
+        if(p[i]!=f){
+            check = true;
+        }
+    }
+    if(check){
+        return true;
+    }
+    return false;
+}
+
+Polynomial Polynomial::operator~(){
+    vector<Term>_p;
+    vector<Term>t = p;
+    for(int i=0;i<t.size();i++){
+        if(~t[i]!=Term(0,0)){
+            _p.push_back(~t[i]);
+        }
+    }
+    return Polynomial(_p);
+}
+Polynomial & Polynomial::operator++(){
+    bool check =true;
+    for(int i=0;i<p.size();i++){
+        if(p[i].get_p()==0){
+           check=false;
+           ++p[i];
+           break;
+       }
+    }
+    if(check){
+        p.push_back(Term(1,0));
+    }
+    return *this;
+}
+Polynomial Polynomial::operator++(int){
+    bool check =true;
+    vector<Term>t=p;
+    for(int i=0;i<p.size();i++){
+        if(p[i].get_p()==0){
+          check=false;
+          ++p[i];
+          break;
+       }
+    }
+    if(check){
+        p.push_back(Term(1,0));
+    }
+    return Polynomial(t);
+}
+Polynomial & Polynomial::operator--(){
+    bool check =true;
+    for(int i=0;i<p.size();i++){
+        if(p[i].get_p()==0){
+           check=false;
+           --p[i];
+           break;
+       }
+    }
+    if(check){
+        p.push_back(Term(-1,0));
+    }
+    return *this;
+}
+Polynomial Polynomial::operator--(int){
+    bool check =true;
+    vector<Term>t=p;
+    for(int i=0;i<p.size();i++){
+        if(p[i].get_p()==0){
+          check=false;
+          --p[i];
+          break;
+       }
+    }
+    if(check){
+        p.push_back(Term(-1,0));
+    }
+    return Polynomial(t);
+}
+
+float Polynomial::operator()(float f){
+    float sum = 0;
+    for(int i=0;i<p.size();i++){
+         sum+=p[i](f);
+    }
+    return sum;
+}
+const Term Polynomial::operator[](const int& index) const{
+    return p[index];
+}
+Term& Polynomial::operator[](const int& index){
+    return p[index];
+}
+ostream& operator<<(ostream &out,Polynomial &po){
+    for(int i=0;i<po.p.size();i++){
+        if(po.p[i].get_c()<0 || i==0){
+            out<<po.p[i];
+        }else{
+            out<<'+'<<po.p[i];
+        }
+    }
+    cout<<endl;
+
+    return out;
+}
+istream& operator>>(istream &in,Polynomial &po){
+    string s;
+    in>>s;
+    vector<string> t;
+    string term;
+    int n=0;
+    reverse(s.begin() , s.end());
+    for (unsigned int i = 0; i < s.size() + 1; i++){
+        if (s[i] == '+'|| s[i] == '\0'){
+            string term;
+            term = s.substr(n, i - n);
+            t.push_back(term);
+            n = i + 1;
+        }
+        else if (s[i] == '-' && i != 0){
+            if (s[i - 1] != '^') {
+                string term;
+                term = s.substr(n, i - n);
+                term = term + '-';
+                t.push_back(term);
+                n = i + 1;
+            }
+        }
+    }
+
+    for (unsigned int i = 0; i < t.size(); i++){
+        reverse(t[i].begin() , t[i].end());
+    }
+
+    vector<Term>te;
+    float c;
+    int p;
+    int x;
+
+    for(int i=0;i<t.size();i++){
+        bool check =true;
+        for(int j=0;j<t[i].size();j++){
+            if(t[i][0]=='-' && t[i][1]=='x'){
+                c=-1;
+                if(t[i][2]=='^'){
+                    p=stod(t[i].substr(3));
+                }else{
+                   p=1;
+                }
+                check=false;
+                te.push_back(Term(c,p));
+                break;
+            }
+        }
+
+        for (int j = 0; j < t[i].size()&&check==true; j++)
+        {
+            if (t[i][0] == 'x')
+            {
+                if (t[i].size() == 1)
+                {
+                    check=false;
+                    c = 1;
+                    p = 1;
+                    te.push_back(Term(c,p));
+                }
+                else if (t[i][1] == '^')
+                {
+                    c = 1;
+                    p = stod(t[i].substr(2).c_str());
+                    te.push_back(Term(c,p));
+                }
+                check=false;
+                break;
+            }
+            if (t[i][t[i].size() - 1] == 'x')
+            {
+                if (t[i].size() == 1)
+                {
+                    check=false;
+                    c = 1;
+                    p = 1;
+                    te.push_back(Term(c,p));
+                    break;
+                }
+                else
+                {
+                    check=false;
+                    x = t[i].find('x');
+                    c = stod(t[i].substr(0, x).c_str());
+                    p = 1;
+                    te.push_back(Term(c,p));
+                    break;
+                }
+            }
+            if (t[i][j] == 'x' && t[i][j + 1] == '^')
+            {
+                check=false;
+                x = t[i].find('x');
+                c = stod(t[i].substr(0, x).c_str());
+
+                p = stod(t[i].substr(x + 2).c_str());
+
+                te.push_back(Term(c,p));
+                break;
+            }
+        }
+        for (int j = 0; j < t[i].size()&& check==true; j++)
+        {
+            if (t[i][j] != 'x' && t[i][j + 1] != '^')
+            {
+                c= stod(t[i].substr().c_str());
+                p= 0;
+                te.push_back(Term(c,p));
+                check=false;
+                break;
+            }
+        }
+
+    }
+    Polynomial pol(te);
+    po.p.clear();
+    po.p=pol.p;
+    po.p=delete_duplicate_term(po.p);
+    sort(po.p);
+    return in;
+}
+int Polynomial::num_of_Term(){
+    return p.size();
+}
+int Polynomial::most_pow(){
+    return p[0].get_p();
+}
+void read_file_txt(Polynomial &Pol1){
+    // Polynomial test = Pol1;
+    ifstream input("Polynomial.txt",ios::in);
+    if(input){
+        // bool check = true;
+        // input >> test;
+        // for (int i = 0; i < test.p.size(); i++)
+        // {
+        //     if (test.p[i] == '^' && test.p[i-1] != 'x' )
+        //     {
+        //         check = false;
+        //         throw Bad_exception("there are wrong thing in Polynomial");
+        //     }
+        // }
+        // if (check)
+        // {
+        //     Pol1 = test;
+        // }
+        input >> Pol1;
+        input.close();
+    }else{
+        cerr<<"File not opened\n";
+    }
+}
+void write_file_txt(Polynomial &Pol1){
+    ofstream output("Polynomial.txt",ios::out);
+    if(output){
+        output << Pol1;
+        output.close();
+    }else{
+        cerr<<"File not opened\n";
+    }
+}
+void write_file_bin(Polynomial &Pol1){
+    ofstream outb("Polynomial.dat", ios::out | ios::binary);
+    if (outb)
+    {
+        int sizee = Pol1.p.size();
+        outb.write((char *) &sizee, sizeof(int));
+        for (int i = 0; i < sizee; i++)
+        {
+            outb.write((char *) &Pol1.p[i], sizeof(Term));
+        }
+
+        outb.close();
+    }
+    else{
+        cerr<<"File not opened\n";
+    }
+}
+void read_file_bin(Polynomial &Pol1){
+    ifstream inb("Polynomial.dat", ios::in | ios::binary);
+    if (inb)
+    {
+        Pol1.p.clear();
+        int size;
+        inb.read((char *) &size, sizeof(int));
+        Pol1.p.resize(size);
+        for (int i = 0; i < size; i++)
+        {
+            inb.read((char *) &Pol1.p[i], sizeof(Term));
+        }
+
+        inb.close();
+    }
+    else{
+        cerr<<"File not opened\n";
+    }
+}
+int main()
+{
+    int a;
+    int b;
+    vector<Term>t;
+    Polynomial Pol1(t);
+    do{
+        cout<<"<<Main Menu>>\n";
+        cout<<"Select your operation:\n1-New/continue Polynomial\n2-Load from text file\n3-Load from binary file\n4-Quit\n";
+        cin>>a;
+        if(a==1){
+            do{
+                cout<<"Current_Polynomial: "<<Pol1;
+                cout<<"<<Polynomial Menu>>\n";
+                cout<<"Select your operation:\n1-Add\n2-Subtract\n3-Multiply\n4-Derivative\n5-Find Degree\n6-Find Value for specific x\n7-Compar\n8-Save to a text file\n9-Save to a binary file\n10-Back to Main Menu\n";
+                cin>>b;
+                if(b==1){
+                    vector<Term>t2;
+                    Polynomial Pol2(t2);
+                    cout<<"Enter Polynomial:\n";
+                    cin>>Pol2;
+                    Pol1+=Pol2;
+                }else if(b==2){
+                    vector<Term>t2;
+                    Polynomial Pol2(t2);
+                    cout<<"Enter Polynomial:\n";
+                    cin>>Pol2;
+                    Pol1-=Pol2;
+
+                }else if(b==3){
+                    vector<Term>t2;
+                    Polynomial Pol2(t2);
+                    cout<<"Enter Polynomial:\n";
+                    cin>>Pol2;
+                    Pol1*=Pol2;
+                }else if(b==4){
+                    Pol1=~Pol1;
+                }else if(b==5){
+                    cout<<"Most of pow: "<<Pol1.most_pow()<<endl;
+                }else if(b==6){
+                    int x;
+                    cout<<"Enter x:\n";
+                    cin>>x;
+                    cout<<"answer:"<<Pol1(x)<<endl;
+
+                }else if(b==7){
+                    vector<Term>t2;
+                    Polynomial Pol2(t2);
+                    cin>>Pol2;
+                    if(Pol1>Pol2){
+                        cout<<"Current_Polynomial > Other_Polynomial: True\n";
+                    }else{
+                        cout<<"Current_Polynomial > Other_Polynomial: false\n";
+                    }
+                    if(Pol1>=Pol2){
+                        cout<<"Current_Polynomial >= Other_Polynomial: true\n";
+                    }else{
+                        cout<<"Current_Polynomial >= Other_Polynomial: false\n";
+                    }
+                    if(Pol1<Pol2){
+                        cout<<"Current_Polynomial < Other_Polynomial: true\n";
+                    }else{
+                        cout<<"Current_Polynomial < Other_Polynomial: false\n";
+                    }
+                    if(Pol1<=Pol2){
+                        cout<<"Current_Polynomial <= Other_Polynomial: true\n";
+                    }else{
+                        cout<<"Current_Polynomial <= Other_Polynomial: false\n";
+                    }
+                    if(Pol1==Pol2){
+                        cout<<"Current_Polynomial == Other_Polynomial: true\n";
+                    }else{
+                        cout<<"Current_Polynomial == Other_Polynomial: false\n";
+                    }
+                }else if(b==8){
+                    write_file_txt(Pol1);
+
+                }else if(b==9){
+                    write_file_bin(Pol1);
+                }
+            }while(b!=10);
+
+        }else if(a==2){
+            read_file_txt(Pol1);
+
+        }else if(a==3){
+            read_file_bin(Pol1);
+
+        }
+    }while(a!=4);
+
+
+    return 0;
+}
